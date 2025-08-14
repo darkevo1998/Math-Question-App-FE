@@ -1,5 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
+console.log('API_BASE value:', API_BASE)
+console.log('API_BASE type:', typeof API_BASE)
+console.log('API_BASE length:', API_BASE.length)
+
 // Mock data for development/testing
 const MOCK_LESSONS = [
   { id: 1, title: "Basic Addition", description: "Learn to add numbers from 1 to 10", progress: 0.8 },
@@ -8,12 +12,15 @@ const MOCK_LESSONS = [
 ]
 
 async function http<T>(path: string, options?: RequestInit): Promise<T> {
+  console.log('HTTP request to:', path, 'API_BASE:', API_BASE)
+  
   // If no API_BASE is set, return mock data
-  if (!API_BASE) {
-    console.warn('No API_BASE set, using mock data')
+  if (!API_BASE || API_BASE === '') {
+    console.warn('No API_BASE set, using mock data for:', path)
     await new Promise(resolve => setTimeout(resolve, 500)) // Simulate network delay
     
     if (path === '/api/lessons') {
+      console.log('Returning mock lessons data')
       return { lessons: MOCK_LESSONS } as T
     }
     if (path.startsWith('/api/lessons/') && path.endsWith('/submit')) {
@@ -22,10 +29,27 @@ async function http<T>(path: string, options?: RequestInit): Promise<T> {
     if (path === '/api/profile') {
       return { name: "Student", level: 3, totalScore: 1250 } as T
     }
+    if (path.startsWith('/api/lessons/') && !path.endsWith('/submit')) {
+      // Mock individual lesson data
+      const lessonId = path.split('/').pop()
+      const lesson = MOCK_LESSONS.find(l => l.id.toString() === lessonId)
+      if (lesson) {
+        return {
+          ...lesson,
+          problems: [
+            { id: 1, question: "What is 2 + 3?", answer: 5 },
+            { id: 2, question: "What is 4 + 1?", answer: 5 },
+            { id: 3, question: "What is 3 + 2?", answer: 5 }
+          ]
+        } as T
+      }
+    }
     
     throw new Error('Mock endpoint not found')
   }
 
+  // Only make actual HTTP request if API_BASE is configured
+  console.log('Making actual HTTP request to:', `${API_BASE}${path}`)
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
