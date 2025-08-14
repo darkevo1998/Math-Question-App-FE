@@ -9,8 +9,10 @@ export default function Lessons() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('Lessons component mounted, fetching data...')
     getLessons()
       .then(r => {
+        console.log('Lessons fetched successfully:', r)
         setItems(r.lessons)
         setError(null)
       })
@@ -19,10 +21,22 @@ export default function Lessons() {
         setError(e.message)
         toast.error('Failed to load lessons. Please check your connection.')
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        console.log('Lessons fetch completed')
+        setLoading(false)
+      })
   }, [])
 
-  if (loading) return <div className="text-center py-10">Loading lessons…</div>
+  console.log('Lessons render state:', { loading, error, itemsCount: items?.length })
+
+  if (loading) {
+    return (
+      <div className="text-center py-10">
+        <div className="text-lg font-semibold mb-2">Loading lessons…</div>
+        <div className="text-sm text-slate-600">Please wait while we fetch your lessons</div>
+      </div>
+    )
+  }
   
   if (error) {
     return (
@@ -50,6 +64,7 @@ export default function Lessons() {
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="text-lg font-semibold mb-4">Available Lessons</div>
       {items.map(l => (
         <Link key={l.id} to={`/lessons/${l.id}`} className="bg-white rounded-xl p-4 shadow-sm border flex items-center justify-between">
           <div>
